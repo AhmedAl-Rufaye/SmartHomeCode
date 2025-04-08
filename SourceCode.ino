@@ -4,7 +4,6 @@
 #include <LiquidCrystal.h>
 #include <Servo.h>
 
-
 // Define the servo pin
 #define SERVO_PIN 53
 // Define DHT 22 pin and setup (temp and humidity sensor)
@@ -21,12 +20,14 @@
 #define YELLOW 0xFFE0
 #define WHITE 0xFFFF
 
+// Define pin for the buzzer
 #define BUZZER_PIN 9
 
 // Define pin for the fan
 #define fanPin A9        // Analog pin
 const int fanPinD = 12;  // Degital pin
 
+// Define pins for the Liquid Crystal Display (LCD)
 LiquidCrystal lcd(2, 3, 4, 5, 6, 7);
 
 // Setup the DHT Sensor
@@ -35,22 +36,28 @@ DHT dht(DHTPin, DHTType);
 // Create a servo object
 Servo servoMotor;
 
-int doorPosition = 0;  //CLosed
+// Define pins for LED and naming them accordingly
+int doorPosition = 0;  //initiating with CLosed status
 const int statusLED = 51;
 const int redLED = 50;
 const int greenLED = 52;
 const int yellowLED = 23;
 const int yellowLED2 = 22;
 
-int motionSensor = 10;  // the pin that the sensor is atteched to
-int motionState = LOW;        // by default, no motion detected
-int motionValue = 0;            // variable to store the sensor status (motionValueue)
+int motionSensor = 10;    // the pin that the sensor is atteched to
+int motionState = LOW;    // by default, no motion detected
+int motionValue = 0;      // variable to store the sensor status (motionValue)
 
-bool stringComplete = false;
+//  bool status used in checking input string status
+bool stringComplete = false; 
 String inputString = "";
+
+// float values to store the sensor readings
 float temp;
 float hum;
 float oldTemp;
+
+// boolean values for status check ups
 bool blink = false;
 bool lightStatus = false;
 bool buzzStatus = false;
@@ -58,18 +65,18 @@ bool doorStatus = false;
 bool fanStatus = false;
 
 void setup() {
-  servoMotor.attach(SERVO_PIN);
-  pinMode(fanPinD, OUTPUT);
+  servoMotor.attach(SERVO_PIN); // initialize servo motor
+  pinMode(fanPinD, OUTPUT); // initalize fan as an output
   pinMode(redLED, OUTPUT);  // initalize LEDs as an output
   pinMode(yellowLED, OUTPUT);
   pinMode(yellowLED2, OUTPUT);
   pinMode(statusLED, OUTPUT);
   pinMode(greenLED, OUTPUT);
   pinMode(motionSensor, INPUT);  // initialize sensor as an input
-  pinMode(BUZZER_PIN, OUTPUT);
+  pinMode(BUZZER_PIN, OUTPUT);  // initalize buzzer as an output
 
   servoMotor.write(180);  //Close door
-  doorPosition = 0;
+  doorPosition = 0; // set status to closed
   Serial.begin(9600);
 
   // set up the LCD's number of columns and rows:
@@ -81,30 +88,7 @@ void setup() {
 }
 
 void loop() {
-  // int indicator = read_async();
-  // lcd.clear();
-  // lcd.print("Temp & Humidity");
-  // // while (!Serial.available()){
-
-  // // clearLCDLine(1);
-  
-  // clearLCDLine(1);
-  // oldTemp = temp;
-  // takeDHTReadings();
-  // checkMotion();
-  // blinky();
-  // buzzBuzz();
-  // // delay(500);
-  // sendReadings();
-
-  
-  // sendReadings();
-  
-  
-  // if(indicator != 1){
-  //   read_async();
-  // }
-  
+ 
   while (stringComplete == false) {
   lcd.clear();
   lcd.print("Temp & Humidity");
@@ -121,29 +105,19 @@ void loop() {
   if(Serial.available() != 1) {
     while (!Serial) yield();
     sendReadings();
-    // Serial.println(Serial.available());
-    // Serial.println("first if");
-
     delay(400);
     serialEvent();
-
   }
+
   if (Serial.available() > 0) {
     
     delay(500);
-    // Serial.println("second if");
-    // Serial.println(Serial.available());
-
-
-    // delay(200);
+   
     serialEvent();
   }
 
   }
-  // } else {
-    // sendReadings();
-  // }
-  // Reset string
+  
   if (inputString.startsWith("status")) {
       sendStatus();
     } else if (inputString.startsWith("set")) {
@@ -201,12 +175,8 @@ void loop() {
     stringComplete = false;
     inputString = "";
 
-  // if (Serial.available() > 0) serialEvent();
-  // }
-
-  // delay(1000);
+ 
 }
-
 
 
 float takeReading(float temp, float hum) {
@@ -220,10 +190,10 @@ float takeReading(float temp, float hum) {
 float takeDHTReadings() {
   // Read temperature in Celsius
   temp = dht.readTemperature();
-  // temp = temperature;
+ 
   // Read humidity (%)
   hum = dht.readHumidity();
-  // hum = humidity;
+ 
   // Check if any reads failed and exit early (to try again)
   if (isnan(hum) || isnan(temp)) {  //Check if the readings are motionValueid
     lcd.print("Failed to read DHT");
@@ -253,15 +223,13 @@ float takeDHTReadings() {
   lcd.print(" % ");
 
   controlDoor(hum);
-  // delay(3000);
 }
-
 
 void checkMotion() {
   motionValue = digitalRead(motionSensor);  // read sensor motionValueue
   if (motionValue == HIGH) {                // check if the sensor is HIGH
     lightsOn();                     // turn LED ON
-    // buzzBuzz();
+    // buzzBuzz();                          //can add alarm feature by uncommenting this line
     delay(100);  // delay 100 milliseconds
 
     if (motionState == LOW) {
@@ -289,7 +257,7 @@ void checkMotion() {
 }
 
 void controlDoor(float humidity) {
-  if (humidity >= 45 & doorPosition == 0) {
+  if (humidity >= 65 & doorPosition == 0) {
 
     Serial.println("High humidity detected!");
     // lcd.setCursor(0, 1);
@@ -310,7 +278,7 @@ void controlDoor(float humidity) {
     delay(100);  // Wait for 1 second
   }
 
-  else if (humidity < 45 & doorPosition == 1) {
+  else if (humidity < 65 & doorPosition == 1) {
     Serial.println("Humidity level: Normal");
     // lcd.setCursor(0, 1);
     // lcd.print("Closing Door!");
@@ -494,3 +462,4 @@ void serialEvent() {
     }
   }
 }
+
